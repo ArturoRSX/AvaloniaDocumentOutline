@@ -1,0 +1,10 @@
+{
+    "scopeName": "text.xml.axaml",
+    "name": "AXAML",
+    "fileTypes": ["axaml"],
+    "patterns": [
+        {
+            "include": "text.xml"
+        }
+    ]
+}

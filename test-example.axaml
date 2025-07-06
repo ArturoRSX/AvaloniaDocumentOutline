@@ -1,0 +1,82 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="TestApp.MainWindow"
+        Title="Test AXAML Window" 
+        x:Name="MainWindow">
+
+    <Grid x:Name="MainGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <Border Grid.Row="0" Background="DarkBlue" Padding="10">
+            <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
+                <Image Source="logo.png" Width="32" Height="32"/>
+                <TextBlock Text="AXAML Document Outline Demo" 
+                          Foreground="White" 
+                          VerticalAlignment="Center" 
+                          Margin="10,0,0,0"
+                          x:Name="TitleText"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- Content Area -->
+        <ScrollViewer Grid.Row="1" Padding="20">
+            <StackPanel x:Name="ContentPanel">
+                <TextBlock Text="Welcome to the AXAML Document Outline Extension!"
+                          FontSize="18" 
+                          FontWeight="Bold"
+                          Margin="0,0,0,10"/>
+                
+                <TextBlock Text="This extension provides hierarchical outline view for AXAML files."
+                          TextWrapping="Wrap"
+                          Margin="0,0,0,20"/>
+                
+                <Grid x:Name="ButtonGrid" ColumnDefinitions="*, *" Margin="0,0,0,20">
+                    <Button Grid.Column="0" 
+                           Content="Click Me!" 
+                           Margin="0,0,5,0"
+                           x:Name="TestButton"/>
+                    <Button Grid.Column="1" 
+                           Content="Another Button" 
+                           Margin="5,0,0,0"
+                           x:Name="AnotherButton"/>
+                </Grid>
+                
+                <CheckBox Content="Enable notifications" 
+                         x:Name="NotificationCheckBox"
+                         Margin="0,0,0,10"/>
+                
+                <ComboBox x:Name="LanguageComboBox" Margin="0,0,0,10">
+                    <ComboBoxItem Content="English"/>
+                    <ComboBoxItem Content="Spanish"/>
+                    <ComboBoxItem Content="French"/>
+                </ComboBox>
+                
+                <ListBox x:Name="ItemsList" Height="100">
+                    <ListBoxItem Content="Item 1"/>
+                    <ListBoxItem Content="Item 2"/>
+                    <ListBoxItem Content="Item 3"/>
+                </ListBox>
+            </StackPanel>
+        </ScrollViewer>
+        
+        <!-- Footer -->
+        <Border Grid.Row="2" Background="LightGray" Padding="10">
+            <DockPanel>
+                <Button Content="Exit" 
+                       DockPanel.Dock="Right"
+                       x:Name="ExitButton"/>
+                <TextBlock Text="Status: Ready" 
+                          VerticalAlignment="Center"
+                          x:Name="StatusText"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>
