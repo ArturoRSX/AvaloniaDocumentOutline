@@ -2,7 +2,7 @@
   "name": "axaml-document-outline",
   "displayName": "AXAML Document Outline",
   "description": "Provides Document Outline functionality for Avalonia AXAML files with hierarchical tree view navigation",
-  "version": "0.0.2",
+  "version": "0.0.7",
   "publisher": "avalonia-tools",
   "engines": {
     "vscode": "^1.101.0"
@@ -19,6 +19,21 @@
       {
         "command": "axaml-outline.activate",
         "title": "Activate AXAML Outline",
+        "category": "AXAML"
+      },
+      {
+        "command": "axaml-outline.status",
+        "title": "Show Extension Status",
+        "category": "AXAML"
+      },
+      {
+        "command": "axaml-outline.forceReload",
+        "title": "Force Reload Extension",
+        "category": "AXAML"
+      },
+      {
+        "command": "axaml-outline.test",
+        "title": "Test Extension (Always Available)",
         "category": "AXAML"
       }
     ],

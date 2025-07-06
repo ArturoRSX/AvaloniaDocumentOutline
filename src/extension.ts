@@ -1,5 +1,9 @@
 import * as vscode from 'vscode';
 
+// Global variable to track activation state
+let isExtensionActivated = false;
+let activationTimestamp: string | null = null;
+
 /**
  * Interface representing an AXAML element
  */
@@ -28,18 +32,34 @@ class AxamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
         token: vscode.CancellationToken
     ): vscode.ProviderResult<vscode.DocumentSymbol[]> {
         
-        console.log(`🔍 Document symbol provider called for: ${document.fileName}`);
+        const timestamp = new Date().toISOString();
+        console.log(`🔍 [${timestamp}] Document symbol provider called for: ${document.fileName}`);
         console.log(`📄 Language ID: ${document.languageId}`);
         console.log(`📝 File extension: ${document.fileName.split('.').pop()}`);
+        console.log(`📁 File URI: ${document.uri.toString()}`);
+        console.log(`🔢 Document version: ${document.version}`);
+        console.log(`📏 Document length: ${document.getText().length} characters`);
         
         if (token.isCancellationRequested) {
             console.log('❌ Token cancelled');
             return [];
         }
 
+        // Check if this is actually an AXAML file
+        const isAxamlFile = document.fileName.toLowerCase().endsWith('.axaml') || 
+                           document.languageId === 'axaml' ||
+                           document.getText().includes('xmlns="https://github.com/avaloniaui"');
+        
+        console.log(`🎯 Is AXAML file: ${isAxamlFile}`);
+        
+        if (!isAxamlFile) {
+            console.log('⚠️ File does not appear to be AXAML, skipping...');
+            return [];
+        }
+
         try {
             const text = document.getText();
-            console.log(`📊 Document length: ${text.length} characters`);
+            console.log(`📊 Processing document with ${text.length} characters`);
             
             const elements = this.parseAxaml(text);
             console.log(`🌳 Parsed ${elements.length} root elements`);
@@ -47,9 +67,15 @@ class AxamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             const symbols = this.convertToDocumentSymbols(elements, document);
             console.log(`✅ Generated ${symbols.length} document symbols`);
             
+            // Log the symbols for debugging
+            symbols.forEach((symbol, index) => {
+                console.log(`  📋 Symbol ${index + 1}: ${symbol.name} (${symbol.kind}) - children: ${symbol.children.length}`);
+            });
+            
             return symbols;
         } catch (error) {
             console.error('❌ Error parsing AXAML:', error);
+            console.error('Stack trace:', (error as Error).stack);
             vscode.window.showErrorMessage(`Error parsing AXAML: ${error}`);
             return [];
         }
@@ -272,13 +298,54 @@ class AxamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
  * Extension activation function
  */
 export function activate(context: vscode.ExtensionContext) {
-    console.log('🚀 AXAML Document Outline extension STARTING...');
+    // Set activation state
+    isExtensionActivated = true;
+    activationTimestamp = new Date().toISOString();
+    
+    // Log muy visible para confirmar activación
+    console.log('=' .repeat(80));
+    console.log('🚀 AXAML DOCUMENT OUTLINE EXTENSION ACTIVATION STARTED 🚀');
+    console.log('=' .repeat(80));
+    
+    console.log(`⏰ Activation time: ${activationTimestamp}`);
+    console.log(`📁 Extension path: ${context.extensionPath}`);
+    console.log(`🏠 Workspace folders: ${vscode.workspace.workspaceFolders?.map(f => f.uri.fsPath).join(', ') || 'None'}`);
+    console.log(`📄 Active editor: ${vscode.window.activeTextEditor?.document.fileName || 'None'}`);
+    console.log(`🔤 Active language: ${vscode.window.activeTextEditor?.document.languageId || 'None'}`);
     
     // Show a notification to confirm activation
-    vscode.window.showInformationMessage('AXAML Document Outline activated! 🎉');
+    vscode.window.showInformationMessage(`🎉 AXAML Extension ACTIVATED at ${new Date().toLocaleTimeString()}!`, 'Show Status', 'OK')
+        .then((choice) => {
+            if (choice === 'Show Status') {
+                vscode.commands.executeCommand('axaml-outline.status');
+            }
+            console.log('✅ Activation notification shown and acknowledged');
+        });
+
+    // Log extension details
+    console.log(`📦 Extension ID: ${context.extension.id}`);
+    console.log(`📋 Extension version: ${context.extension.packageJSON.version}`);
+    console.log(`🔧 Extension mode: ${context.extensionMode}`);
+
+    // Register a test command that's always available
+    const testCommand = vscode.commands.registerCommand('axaml-outline.test', () => {
+        const testInfo = {
+            activated: isExtensionActivated,
+            activationTime: activationTimestamp,
+            currentTime: new Date().toISOString(),
+            activeFile: vscode.window.activeTextEditor?.document.fileName || 'None',
+            languageId: vscode.window.activeTextEditor?.document.languageId || 'None'
+        };
+        
+        console.log('🧪 TEST COMMAND EXECUTED:', testInfo);
+        vscode.window.showInformationMessage(`Extension Test: Activated=${testInfo.activated}, File=${testInfo.activeFile.split('\\').pop()}`);
+    });
+    
+    context.subscriptions.push(testCommand);
 
     // Create and register the document symbol provider
     const provider = new AxamlDocumentSymbolProvider();
+    console.log('🏭 Document symbol provider created');
     
     // Register for AXAML files with multiple selectors
     const registrations = [
@@ -292,7 +359,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.languages.registerDocumentSymbolProvider(
             { pattern: '**/*.axaml' },
             provider,
-            { label: 'AXAML Outline' }
+            { label: 'AXAML Outline (Pattern)' }
         ),
         // Broad registration for XML files
         vscode.languages.registerDocumentSymbolProvider(
@@ -303,12 +370,142 @@ export function activate(context: vscode.ExtensionContext) {
     ];
 
     // Add all registrations to subscriptions
-    registrations.forEach(registration => {
+    registrations.forEach((registration, index) => {
         context.subscriptions.push(registration);
+        console.log(`✅ Registration ${index + 1} added to subscriptions`);
     });
+    
+    // Listen for active editor changes to log when AXAML files are opened
+    const onDidChangeActiveEditor = vscode.window.onDidChangeActiveTextEditor(editor => {
+        if (editor) {
+            console.log(`📝 Active editor changed to: ${editor.document.fileName}`);
+            console.log(`🔤 Language ID: ${editor.document.languageId}`);
+            console.log(`📄 File extension: ${editor.document.fileName.split('.').pop()}`);
+            
+            if (editor.document.fileName.endsWith('.axaml')) {
+                console.log('🎯 AXAML file detected! Document symbols should be available.');
+                // Force refresh of outline
+                vscode.commands.executeCommand('outline.refresh');
+            }
+        }
+    });
+    
+    context.subscriptions.push(onDidChangeActiveEditor);
+    
+    // Listen for document open events
+    const onDidOpenTextDocument = vscode.workspace.onDidOpenTextDocument(document => {
+        console.log(`📂 Document opened: ${document.fileName}`);
+        console.log(`🔤 Language ID: ${document.languageId}`);
+        
+        if (document.fileName.endsWith('.axaml')) {
+            console.log('🎯 AXAML document opened! Symbols should be processed.');
+        }
+    });
+    
+    context.subscriptions.push(onDidOpenTextDocument);
+    
+    // Check if there's already an AXAML file open when extension activates
+    if (vscode.window.activeTextEditor) {
+        const editor = vscode.window.activeTextEditor;
+        console.log(`📄 Extension activated with active editor: ${editor.document.fileName}`);
+        if (editor.document.fileName.endsWith('.axaml')) {
+            console.log('🎯 AXAML file already open on activation!');
+            // Force refresh of outline
+            setTimeout(() => {
+                vscode.commands.executeCommand('outline.refresh');
+            }, 100);
+        }
+    }
+    
+    // Register a command to manually trigger outline
+    const manualActivateCommand = vscode.commands.registerCommand('axaml-outline.activate', () => {
+        console.log('🔧 Manual activation command triggered');
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            console.log(`📄 Current file: ${editor.document.fileName}`);
+            console.log(`🔤 Language: ${editor.document.languageId}`);
+            console.log(`📝 File extension: ${editor.document.fileName.split('.').pop()}`);
+            
+            // Force call the provider directly
+            if (editor.document.fileName.endsWith('.axaml')) {
+                console.log('🎯 Calling provider directly for AXAML file...');
+                const symbols = provider.provideDocumentSymbols(editor.document, new vscode.CancellationTokenSource().token);
+                console.log(`📊 Provider returned: ${symbols}`);
+            }
+            
+            vscode.commands.executeCommand('outline.refresh');
+            vscode.window.showInformationMessage('AXAML Outline manually activated');
+        } else {
+            vscode.window.showWarningMessage('No active editor found');
+        }
+    });
+    
+    context.subscriptions.push(manualActivateCommand);
+    
+    // Register a command to show extension status
+    const statusCommand = vscode.commands.registerCommand('axaml-outline.status', () => {
+        const editor = vscode.window.activeTextEditor;
+        const status = {
+            extensionActive: isExtensionActivated,
+            activationTime: activationTimestamp,
+            activeFile: editor?.document.fileName || 'None',
+            languageId: editor?.document.languageId || 'None',
+            registrations: registrations.length,
+            workspaceFolders: vscode.workspace.workspaceFolders?.length || 0,
+            currentTime: new Date().toISOString()
+        };
+        
+        console.log('📊 Extension Status:', status);
+        vscode.window.showInformationMessage(
+            `Extension Status: ${status.extensionActive ? '✅ Active' : '❌ Inactive'}\nFile: ${status.activeFile.split('\\').pop()}\nLanguage: ${status.languageId}`,
+            'Show in Console'
+        ).then((choice) => {
+            if (choice === 'Show in Console') {
+                console.table(status);
+            }
+        });
+    });
+    
+    context.subscriptions.push(statusCommand);
+    
+    // Register a command to force reload the extension
+    const reloadCommand = vscode.commands.registerCommand('axaml-outline.forceReload', async () => {
+        console.log('🔄 Force reload command triggered');
+        
+        // Try to reactivate the provider manually
+        const newProvider = new AxamlDocumentSymbolProvider();
+        
+        vscode.languages.registerDocumentSymbolProvider(
+            { language: 'axaml' },
+            newProvider,
+            { label: 'AXAML Outline (Reloaded)' }
+        );
+        
+        // Force refresh of outline
+        await vscode.commands.executeCommand('outline.refresh');
+        
+        vscode.window.showInformationMessage('AXAML Extension force reloaded!');
+        console.log('✅ Extension force reloaded');
+    });
+    
+    context.subscriptions.push(reloadCommand);
     
     console.log('✅ AXAML Document Symbol Providers registered successfully');
     console.log(`📊 Total registrations: ${registrations.length}`);
+    console.log(`🎯 Extension fully activated and ready!`);
+    
+    // Final activation log
+    console.log('=' .repeat(80));
+    console.log('✅ AXAML DOCUMENT OUTLINE EXTENSION ACTIVATION COMPLETED ✅');
+    console.log('=' .repeat(80));
+    
+    // Write to output channel as well
+    const outputChannel = vscode.window.createOutputChannel('AXAML Outline');
+    outputChannel.appendLine(`AXAML Extension activated at ${activationTimestamp}`);
+    outputChannel.appendLine(`Active file: ${vscode.window.activeTextEditor?.document.fileName || 'None'}`);
+    outputChannel.appendLine(`Total registrations: ${registrations.length}`);
+    
+    context.subscriptions.push(outputChannel);
 }
 
 /**
