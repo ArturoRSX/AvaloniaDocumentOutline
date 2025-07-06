@@ -15,7 +15,7 @@
         </Grid.RowDefinitions>
         
         <!-- Header -->
-        <Border Grid.Row="0" Background="DarkBlue" Padding="10">
+        <Border x:Name="Lol" Grid.Row="0" Background="DarkBlue" Padding="10">
             <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
                 <Image Source="logo.png" Width="32" Height="32"/>
                 <TextBlock Text="AXAML Document Outline Demo" 
@@ -27,7 +27,7 @@
         </Border>
         
         <!-- Content Area -->
-        <ScrollViewer Grid.Row="1" Padding="20">
+        <ScrollViewer x:Name="Hahaha" Grid.Row="1" Padding="20">
             <StackPanel x:Name="ContentPanel">
                 <TextBlock Text="Welcome to the AXAML Document Outline Extension!"
                           FontSize="18" 

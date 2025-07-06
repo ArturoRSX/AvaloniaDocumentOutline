@@ -122,9 +122,16 @@ class AxamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
                     fullTagContent += ' ' + lines[currentLineIndex].trim();
                 }
 
+                console.log(`🏗️ Processing tag: ${tagName}`);
+                console.log(`📄 Full tag content: "${fullTagContent}"`);
+
                 const isSelfClosing = fullTagContent.includes('/>');
-                const attributesMatch = fullTagContent.match(/<[^>]*?([^<]*?)(\s*\/?)>$/);
-                const attributesStr = attributesMatch ? attributesMatch[1] : '';
+                
+                // Better regex to extract attributes - get everything between tag name and closing >
+                const attributesMatch = fullTagContent.match(new RegExp(`<${tagName}\\s+([^>]*?)\\s*/?>`));
+                const attributesStr = attributesMatch ? attributesMatch[1].trim() : '';
+                
+                console.log(`📝 Extracted attributes string: "${attributesStr}"`);
 
                 const element: AxamlElement = {
                     name: this.getElementDisplayName(tagName, attributesStr),
@@ -172,14 +179,24 @@ class AxamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
     private parseAttributes(attributeStr: string): Map<string, string> {
         const attributes = new Map<string, string>();
         
+        console.log(`🔍 Parsing attributes from: "${attributeStr}"`);
+        
+        // Clean up the attribute string - remove extra whitespace and newlines
+        const cleanedStr = attributeStr.replace(/\s+/g, ' ').trim();
+        console.log(`🧹 Cleaned attribute string: "${cleanedStr}"`);
+        
         // Match attribute="value" or attribute='value'
         const attrRegex = /([a-zA-Z][a-zA-Z0-9.:_-]*)\s*=\s*["']([^"']*)["']/g;
         let match;
         
-        while ((match = attrRegex.exec(attributeStr)) !== null) {
-            attributes.set(match[1], match[2]);
+        while ((match = attrRegex.exec(cleanedStr)) !== null) {
+            const key = match[1];
+            const value = match[2];
+            attributes.set(key, value);
+            console.log(`  📋 Found attribute: ${key} = "${value}"`);
         }
         
+        console.log(`📊 Total attributes found: ${attributes.size}`);
         return attributes;
     }
 
@@ -187,29 +204,48 @@ class AxamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
      * Get display name for element based on tag name and attributes
      */
     private getElementDisplayName(tagName: string, attributesStr: string): string {
+        console.log(`🏷️ Getting display name for: ${tagName}`);
+        console.log(`📝 Attributes string: "${attributesStr}"`);
+        
         const attributes = this.parseAttributes(attributesStr);
+        console.log(`🗂️ Parsed attributes:`, Array.from(attributes.entries()));
         
         // Try to use x:Name or Name attribute
-        const name = attributes.get('x:Name') || attributes.get('Name');
-        if (name) {
-            return `${tagName} (${name})`;
+        const xName = attributes.get('x:Name');
+        const name = attributes.get('Name');
+        
+        console.log(`🎯 x:Name: "${xName}", Name: "${name}"`);
+        
+        // If we have x:Name or Name, just show the name (no type prefix)
+        if (xName) {
+            console.log(`✅ Using x:Name only: ${xName}`);
+            return xName;
         }
         
-        // For some common controls, show additional info
+        if (name) {
+            console.log(`✅ Using Name only: ${name}`);
+            return name;
+        }
+        
+        // For controls without names, show type with additional info if available
         if (tagName === 'Button') {
             const content = attributes.get('Content');
             if (content) {
-                return `${tagName} "${content}"`;
+                console.log(`✅ Using Button Content: ${content}`);
+                return `Button "${content}"`;
             }
         }
         
         if (tagName === 'TextBlock') {
             const text = attributes.get('Text');
             if (text) {
-                return `${tagName} "${text}"`;
+                console.log(`✅ Using TextBlock Text: ${text}`);
+                return `TextBlock "${text}"`;
             }
         }
         
+        // For elements without names or special content, just show the tag name
+        console.log(`⚪ Using default name: ${tagName}`);
         return tagName;
     }
 
