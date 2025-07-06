@@ -216,7 +216,7 @@ class AxamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
         
         console.log(`🎯 x:Name: "${xName}", Name: "${name}"`);
         
-        // If we have x:Name or Name, just show the name (no type prefix)
+        // If we have x:Name or Name, just show the name (no brackets)
         if (xName) {
             console.log(`✅ Using x:Name only: ${xName}`);
             return xName;
@@ -227,26 +227,26 @@ class AxamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             return name;
         }
         
-        // For controls without names, show type with additional info if available
+        // For controls without names, show [type] with additional info if available
         if (tagName === 'Button') {
             const content = attributes.get('Content');
             if (content) {
-                console.log(`✅ Using Button Content: ${content}`);
-                return `Button "${content}"`;
+                console.log(`✅ Using Button Content: [Button "${content}"]`);
+                return `[Button "${content}"]`;
             }
         }
         
         if (tagName === 'TextBlock') {
             const text = attributes.get('Text');
             if (text) {
-                console.log(`✅ Using TextBlock Text: ${text}`);
-                return `TextBlock "${text}"`;
+                console.log(`✅ Using TextBlock Text: [TextBlock "${text}"]`);
+                return `[TextBlock "${text}"]`;
             }
         }
         
-        // For elements without names or special content, just show the tag name
-        console.log(`⚪ Using default name: ${tagName}`);
-        return tagName;
+        // For elements without names, show [TagName]
+        console.log(`⚪ Using bracketed name: [${tagName}]`);
+        return `[${tagName}]`;
     }
 
     /**
