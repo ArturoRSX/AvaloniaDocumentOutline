@@ -1,5 +1,7 @@
 # Avalonia Document Outline
 
+[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/LegendTheDeveloper.avalonia-document-outline?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=LegendTheDeveloper.avalonia-document-outline)
+
 This VS Code extension provides **Document Outline** functionality for Avalonia AXAML files, displaying a hierarchical tree view of your user interface elements.
 
 ![image](https://github.com/user-attachments/assets/d52a67f8-e5bf-409a-bd57-70b4f9f3e897)
