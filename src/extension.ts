@@ -533,33 +533,14 @@ export function activate(context: vscode.ExtensionContext) {
   const provider = new AxamlDocumentSymbolProvider();
   console.log("🏭 Document symbol provider created");
 
-  // Register for AXAML files with multiple selectors
-  const registrations = [
-    // Primary registration for AXAML files
-    vscode.languages.registerDocumentSymbolProvider(
-      { language: "axaml" },
-      provider,
-      { label: "Avalonia Document Outline" }
-    ),
-    // Fallback for XML files that might be AXAML
-    vscode.languages.registerDocumentSymbolProvider(
-      { pattern: "**/*.axaml" },
-      provider,
-      { label: "Avalonia Document Outline (Pattern)" }
-    ),
-    // Broad registration for XML files
-    vscode.languages.registerDocumentSymbolProvider(
-      { language: "xml" },
-      provider,
-      { label: "Avalonia Document Outline (XML)" }
-    ),
-  ];
-
-  // Add all registrations to subscriptions
-  registrations.forEach((registration, index) => {
-    context.subscriptions.push(registration);
-    console.log(`✅ Registration ${index + 1} added to subscriptions`);
-  });
+  // Register only for AXAML files (avoid duplicates in Outline)
+  const registration = vscode.languages.registerDocumentSymbolProvider(
+    { language: "axaml" },
+    provider,
+    { label: "Avalonia Document Outline" }
+  );
+  context.subscriptions.push(registration);
+  console.log("✅ Registration for axaml language added to subscriptions");
 
   // Listen for active editor changes to log when AXAML files are opened
   const onDidChangeActiveEditor = vscode.window.onDidChangeActiveTextEditor(
@@ -686,7 +667,6 @@ export function activate(context: vscode.ExtensionContext) {
         activationTime: activationTimestamp,
         activeFile: editor?.document.fileName || "None",
         languageId: editor?.document.languageId || "None",
-        registrations: registrations.length,
         workspaceFolders: vscode.workspace.workspaceFolders?.length || 0,
         currentTime: new Date().toISOString(),
       };
@@ -908,8 +888,7 @@ ${attributes || "  (none)"}`;
   context.subscriptions.push(toggleLineNumbersCommand);
 
   console.log("✅ AXAML Document Symbol Providers registered successfully");
-  console.log(`📊 Total registrations: ${registrations.length}`);
-  console.log(`🎯 Extension fully activated and ready!`);
+  console.log("🎯 Extension fully activated and ready!");
 
   // Final activation log
   console.log("=".repeat(80));
@@ -928,8 +907,6 @@ ${attributes || "  (none)"}`;
       vscode.window.activeTextEditor?.document.fileName || "None"
     }`
   );
-  outputChannel.appendLine(`Total registrations: ${registrations.length}`);
-
   context.subscriptions.push(outputChannel);
 }
 
