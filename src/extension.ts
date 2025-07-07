@@ -112,8 +112,26 @@ class AxamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             if (tagMatch) {
                 const tagName = tagMatch[1];
                 
-                // Skip property definition tags like Grid.RowDefinitions
+                // Skip property definition tags like Grid.RowDefinitions, Grid.ColumnDefinitions, etc.
                 if (tagName.includes('.')) {
+                    continue;
+                }
+                
+                // Skip definition containers that are not visual elements
+                const definitionTags = [
+                    'RowDefinitions', 
+                    'ColumnDefinitions', 
+                    'RowDefinition', 
+                    'ColumnDefinition',
+                    'Resources',
+                    'Styles',
+                    'Triggers',
+                    'DataTemplates',
+                    'ControlThemes'
+                ];
+                
+                if (definitionTags.includes(tagName)) {
+                    console.log(`⏭️ Skipping definition tag: ${tagName}`);
                     continue;
                 }
 
