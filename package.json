@@ -2,7 +2,7 @@
   "name": "avalonia-document-outline",
   "displayName": "Avalonia Document Outline",
   "description": "Document Outline for Avalonia AXAML files. Browse, navigate, and visualize your UI structure in VS Code.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "LegendTheDeveloper",
   "author": {
     "name": "LegendTheDeveloper",
@@ -38,6 +38,7 @@
   "homepage": "https://github.com/LegendTheDeveloper/avalonia-document-outline#readme",
   "license": "MIT",
   "main": "./dist/extension.js",
+  "icon": "images/icon.png",
   "contributes": {
     "commands": [
       {
