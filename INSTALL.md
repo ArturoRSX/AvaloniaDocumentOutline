@@ -1,4 +1,4 @@
-# Instalación de AXAML Outline
+# Instalación de Avalonia Document Outline
 
 ## Instalación desde archivo VSIX
 
