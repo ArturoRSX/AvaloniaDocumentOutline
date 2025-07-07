@@ -1,4 +1,4 @@
-# AXAML Outline
+# Avalonia Document Outline
 
 This VS Code extension provides **Document Outline** functionality for Avalonia AXAML files, displaying a hierarchical tree view of your user interface elements.
 

@@ -1,4 +1,4 @@
-# Welcome to your VS Code Extension
+# Avalonia Document Outline
 
 ## What's in the folder
 
