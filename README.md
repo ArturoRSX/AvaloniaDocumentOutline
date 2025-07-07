@@ -66,4 +66,4 @@ If you find any issues or have suggestions for improvements, please create an is
 
 ---
 
-**Enjoy a better way to navigate your AXAML files!** 🚀
+**Enjoy a better way to navigate your Avalonia AXAML files!** 🚀
