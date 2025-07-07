@@ -1,9 +1,27 @@
 # Change Log
 
-All notable changes to the "DocumentOutlineAvalonia" extension will be documented in this file.
+All notable changes to the "AXAML Outline" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## [0.1.7] - 2025-07-06
 
-## [Unreleased]
+### Changed
+- Actualización menor de metadatos, repositorio y visibilidad en el marketplace.
 
-- Initial release
+## [0.1.6] - 2025-07-06
+
+### Added
+- Initial release of AXAML Outline extension
+- Automatic AXAML file parsing with hierarchical tree view
+- Click-to-navigate functionality for quick code navigation
+- Support for all major Avalonia UI elements (Window, Grid, StackPanel, Button, TextBlock, etc.)
+- Element names and types display (x:Name, Content, Text properties)
+- Appropriate icons for different element types
+- Keyboard shortcuts for enhanced navigation
+- Toggle line numbers in outline view
+- Element information display functionality
+
+### Features
+- Recognizes Windows, UserControls, layout containers, interactive controls, text controls, lists, and media elements
+- Displays element names using x:Name or Name attributes
+- Shows control content for buttons, text blocks, and other content-bearing elements
+- Categorizes elements with appropriate VS Code symbols and icons
