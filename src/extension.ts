@@ -125,6 +125,8 @@ class AxamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
                     'ColumnDefinition',
                     'Resources',
                     'Styles',
+                    'Style',
+                    'Setter',
                     'Triggers',
                     'DataTemplates',
                     'ControlThemes'
