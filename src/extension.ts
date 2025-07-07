@@ -4,6 +4,11 @@ import * as vscode from 'vscode';
 let isExtensionActivated = false;
 let activationTimestamp: string | null = null;
 
+// Global variables to track outline selection
+let currentAxamlElements: AxamlElement[] = [];
+let currentDocument: vscode.TextDocument | null = null;
+let showLineNumbers = true; // Toggle for line numbers
+
 /**
  * Interface representing an AXAML element
  */
@@ -84,7 +89,7 @@ class AxamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
     /**
      * Parse AXAML content and extract UI elements
      */
-    private parseAxaml(text: string): AxamlElement[] {
+    public parseAxaml(text: string): AxamlElement[] {
         const elements: AxamlElement[] = [];
         const lines = text.split('\n');
         const stack: AxamlElement[] = [];
@@ -216,37 +221,41 @@ class AxamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
         
         console.log(`🎯 x:Name: "${xName}", Name: "${name}"`);
         
+        let displayName = '';
+        
         // If we have x:Name or Name, just show the name (no brackets)
         if (xName) {
             console.log(`✅ Using x:Name only: ${xName}`);
-            return xName;
-        }
-        
-        if (name) {
+            displayName = xName;
+        } else if (name) {
             console.log(`✅ Using Name only: ${name}`);
-            return name;
-        }
-        
-        // For controls without names, show [type] with additional info if available
-        if (tagName === 'Button') {
-            const content = attributes.get('Content');
-            if (content) {
-                console.log(`✅ Using Button Content: [Button "${content}"]`);
-                return `[Button "${content}"]`;
+            displayName = name;
+        } else {
+            // For controls without names, show [type] with additional info if available
+            if (tagName === 'Button') {
+                const content = attributes.get('Content');
+                if (content) {
+                    console.log(`✅ Using Button Content: [Button "${content}"]`);
+                    displayName = `[Button "${content}"]`;
+                } else {
+                    displayName = `[${tagName}]`;
+                }
+            } else if (tagName === 'TextBlock') {
+                const text = attributes.get('Text');
+                if (text) {
+                    console.log(`✅ Using TextBlock Text: [TextBlock "${text}"]`);
+                    displayName = `[TextBlock "${text}"]`;
+                } else {
+                    displayName = `[${tagName}]`;
+                }
+            } else {
+                // For elements without names, show [TagName]
+                console.log(`⚪ Using bracketed name: [${tagName}]`);
+                displayName = `[${tagName}]`;
             }
         }
         
-        if (tagName === 'TextBlock') {
-            const text = attributes.get('Text');
-            if (text) {
-                console.log(`✅ Using TextBlock Text: [TextBlock "${text}"]`);
-                return `[TextBlock "${text}"]`;
-            }
-        }
-        
-        // For elements without names, show [TagName]
-        console.log(`⚪ Using bracketed name: [${tagName}]`);
-        return `[${tagName}]`;
+        return displayName;
     }
 
     /**
@@ -270,9 +279,19 @@ class AxamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             new vscode.Position(element.startLine, element.startColumn + element.tagName.length + 1)
         );
 
+        // Get the clean display name without line numbers
+        const displayName = this.getElementDisplayName(element.tagName, '');
+        const cleanName = this.getCleanElementDisplayName(element);
+        
+        // Create detail string with line number if enabled
+        let detail = element.tagName;
+        if (showLineNumbers) {
+            detail = `${element.tagName} (Line ${element.startLine + 1})`;
+        }
+
         const symbol = new vscode.DocumentSymbol(
-            element.name,
-            element.tagName,
+            cleanName, // Clean name without line numbers
+            detail, // Type and line number in gray italics
             this.getSymbolKind(element.tagName),
             range,
             selectionRange
@@ -282,6 +301,40 @@ class AxamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
         symbol.children = element.children.map(child => this.createDocumentSymbol(child, document));
 
         return symbol;
+    }
+
+    /**
+     * Get clean display name without line numbers for use in DocumentSymbol
+     */
+    private getCleanElementDisplayName(element: AxamlElement): string {
+        const attributes = element.attributes;
+        const xName = attributes.get('x:Name');
+        const name = attributes.get('Name');
+        
+        if (xName) {
+            return xName;
+        } else if (name) {
+            return name;
+        } else {
+            // For controls without names, show [type] with additional info if available
+            if (element.tagName === 'Button') {
+                const content = attributes.get('Content');
+                if (content) {
+                    return `[Button "${content}"]`;
+                } else {
+                    return `[${element.tagName}]`;
+                }
+            } else if (element.tagName === 'TextBlock') {
+                const text = attributes.get('Text');
+                if (text) {
+                    return `[TextBlock "${text}"]`;
+                } else {
+                    return `[${element.tagName}]`;
+                }
+            } else {
+                return `[${element.tagName}]`;
+            }
+        }
     }
 
     /**
@@ -420,8 +473,11 @@ export function activate(context: vscode.ExtensionContext) {
             
             if (editor.document.fileName.endsWith('.axaml')) {
                 console.log('🎯 AXAML file detected! Document symbols should be available.');
-                // Force refresh of outline
-                vscode.commands.executeCommand('outline.refresh');
+                // Force refresh of outline by calling provider directly
+                setTimeout(() => {
+                    const symbols = provider.provideDocumentSymbols(editor.document, new vscode.CancellationTokenSource().token);
+                    console.log(`🔄 Forced outline refresh on editor change`);
+                }, 100);
             }
         }
     });
@@ -440,6 +496,18 @@ export function activate(context: vscode.ExtensionContext) {
     
     context.subscriptions.push(onDidOpenTextDocument);
     
+    // Listen for cursor position changes to select elements in outline
+    const onDidChangeTextEditorSelection = vscode.window.onDidChangeTextEditorSelection(event => {
+        if (event.textEditor && event.textEditor.document.fileName.endsWith('.axaml')) {
+            // Debounce cursor position changes to avoid too many calls
+            setTimeout(() => {
+                onCursorPositionChanged(event.textEditor);
+            }, 100);
+        }
+    });
+    
+    context.subscriptions.push(onDidChangeTextEditorSelection);
+    
     // Check if there's already an AXAML file open when extension activates
     if (vscode.window.activeTextEditor) {
         const editor = vscode.window.activeTextEditor;
@@ -448,7 +516,8 @@ export function activate(context: vscode.ExtensionContext) {
             console.log('🎯 AXAML file already open on activation!');
             // Force refresh of outline
             setTimeout(() => {
-                vscode.commands.executeCommand('outline.refresh');
+                const symbols = provider.provideDocumentSymbols(editor.document, new vscode.CancellationTokenSource().token);
+                console.log(`🔄 Forced outline refresh on activation`);
             }, 100);
         }
     }
@@ -469,7 +538,7 @@ export function activate(context: vscode.ExtensionContext) {
                 console.log(`📊 Provider returned: ${symbols}`);
             }
             
-            vscode.commands.executeCommand('outline.refresh');
+            vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
             vscode.window.showInformationMessage('AXAML Outline manually activated');
         } else {
             vscode.window.showWarningMessage('No active editor found');
@@ -517,14 +586,159 @@ export function activate(context: vscode.ExtensionContext) {
             { label: 'AXAML Outline (Reloaded)' }
         );
         
-        // Force refresh of outline
-        await vscode.commands.executeCommand('outline.refresh');
+        // Force refresh of outline by calling provider directly
+        const newSymbols = newProvider.provideDocumentSymbols(
+            vscode.window.activeTextEditor?.document!, 
+            new vscode.CancellationTokenSource().token
+        );
         
         vscode.window.showInformationMessage('AXAML Extension force reloaded!');
         console.log('✅ Extension force reloaded');
     });
     
     context.subscriptions.push(reloadCommand);
+    
+    // Register a command to navigate to element by name
+    const navigateToElementCommand = vscode.commands.registerCommand('axaml-outline.navigateToElement', async (elementName?: string) => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor || !editor.document.fileName.endsWith('.axaml')) {
+            vscode.window.showWarningMessage('No active AXAML file found');
+            return;
+        }
+        
+        // Parse the current document if needed
+        if (currentDocument !== editor.document) {
+            const provider = new AxamlDocumentSymbolProvider();
+            const text = editor.document.getText();
+            try {
+                currentAxamlElements = provider.parseAxaml(text);
+                currentDocument = editor.document;
+            } catch (error) {
+                vscode.window.showErrorMessage('Error parsing AXAML file');
+                return;
+            }
+        }
+        
+        // Get all elements in a flat list
+        const flatElements: AxamlElement[] = [];
+        function addElementsToList(elements: AxamlElement[]) {
+            for (const element of elements) {
+                flatElements.push(element);
+                addElementsToList(element.children);
+            }
+        }
+        addElementsToList(currentAxamlElements);
+        
+        // If no element name provided, show quick pick
+        if (!elementName) {
+            const items = flatElements.map(element => ({
+                label: element.name,
+                description: element.tagName,
+                detail: `Line ${element.startLine + 1}`,
+                element: element
+            }));
+            
+            const selected = await vscode.window.showQuickPick(items, {
+                placeHolder: 'Select an AXAML element to navigate to'
+            });
+            
+            if (selected) {
+                navigateToElement(editor, selected.element);
+            }
+        } else {
+            // Find element by name
+            const element = flatElements.find(e => e.name === elementName);
+            if (element) {
+                navigateToElement(editor, element);
+            } else {
+                vscode.window.showWarningMessage(`Element "${elementName}" not found`);
+            }
+        }
+    });
+    
+    context.subscriptions.push(navigateToElementCommand);
+    
+    // Register a command to show element information
+    const showElementInfoCommand = vscode.commands.registerCommand('axaml-outline.showElementInfo', () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor || !editor.document.fileName.endsWith('.axaml')) {
+            vscode.window.showWarningMessage('No active AXAML file found');
+            return;
+        }
+        
+        // Parse the current document if needed
+        if (currentDocument !== editor.document) {
+            const provider = new AxamlDocumentSymbolProvider();
+            const text = editor.document.getText();
+            try {
+                currentAxamlElements = provider.parseAxaml(text);
+                currentDocument = editor.document;
+            } catch (error) {
+                vscode.window.showErrorMessage('Error parsing AXAML file');
+                return;
+            }
+        }
+        
+        const position = editor.selection.active;
+        const element = findElementAtPosition(currentAxamlElements, position);
+        
+        if (element) {
+            const attributes = Array.from(element.attributes.entries())
+                .map(([key, value]) => `  ${key}="${value}"`)
+                .join('\n');
+                
+            const info = `Element Information:
+Name: ${element.name}
+Tag: ${element.tagName}
+Position: Line ${element.startLine + 1}
+Children: ${element.children.length}
+Attributes:
+${attributes || '  (none)'}`;
+            
+            vscode.window.showInformationMessage(info, { modal: true });
+        } else {
+            vscode.window.showInformationMessage('No AXAML element found at cursor position');
+        }
+    });
+    
+    context.subscriptions.push(showElementInfoCommand);
+    
+    // Register a command to toggle line numbers in outline
+    const toggleLineNumbersCommand = vscode.commands.registerCommand('axaml-outline.toggleLineNumbers', async () => {
+        showLineNumbers = !showLineNumbers;
+        
+        const status = showLineNumbers ? 'enabled' : 'disabled';
+        vscode.window.showInformationMessage(`AXAML Outline line numbers ${status}`);
+        
+        console.log(`🔢 Line numbers in outline: ${status}`);
+        
+        // Refresh the outline by forcing document change detection
+        const editor = vscode.window.activeTextEditor;
+        if (editor && editor.document.fileName.endsWith('.axaml')) {
+            // Clear cached elements to force re-parsing with new line number setting
+            currentDocument = null;
+            currentAxamlElements = [];
+            
+            // Force a document symbol refresh by calling the provider directly
+            const symbols = provider.provideDocumentSymbols(editor.document, new vscode.CancellationTokenSource().token);
+            console.log(`🔄 Forced outline refresh, symbols: ${symbols ? 'generated' : 'none'}`);
+            
+            // Alternative: trigger a small edit and undo to force refresh
+            try {
+                const position = new vscode.Position(0, 0);
+                await editor.edit(editBuilder => {
+                    editBuilder.insert(position, ' ');
+                });
+                await editor.edit(editBuilder => {
+                    editBuilder.delete(new vscode.Range(position, new vscode.Position(0, 1)));
+                });
+            } catch (error) {
+                console.log('⚠️ Could not trigger edit refresh, but symbols should still update');
+            }
+        }
+    });
+    
+    context.subscriptions.push(toggleLineNumbersCommand);
     
     console.log('✅ AXAML Document Symbol Providers registered successfully');
     console.log(`📊 Total registrations: ${registrations.length}`);
@@ -549,4 +763,119 @@ export function activate(context: vscode.ExtensionContext) {
  */
 export function deactivate() {
     console.log('AXAML Document Outline extension deactivated');
+}
+
+/**
+ * Find the AXAML element that contains the given position
+ */
+function findElementAtPosition(elements: AxamlElement[], position: vscode.Position): AxamlElement | null {
+    for (const element of elements) {
+        // Check if position is within this element's range
+        const startPos = new vscode.Position(element.startLine, element.startColumn);
+        const endPos = new vscode.Position(element.endLine, element.endColumn);
+        const range = new vscode.Range(startPos, endPos);
+        
+        if (range.contains(position)) {
+            // First check children to find the most specific element
+            const childElement = findElementAtPosition(element.children, position);
+            return childElement || element;
+        }
+    }
+    return null;
+}
+
+/**
+ * Select the corresponding element in the outline view
+ */
+async function selectElementInOutline(element: AxamlElement) {
+    if (!currentDocument) {
+        return;
+    }
+    
+    try {
+        // Create a range for the element's opening tag
+        const tagStart = new vscode.Position(element.startLine, element.startColumn);
+        const tagEnd = new vscode.Position(element.startLine, element.startColumn + element.tagName.length + 1);
+        const tagRange = new vscode.Range(tagStart, tagEnd);
+        
+        // Get the current editor
+        const editor = vscode.window.activeTextEditor;
+        if (!editor || editor.document !== currentDocument) {
+            return;
+        }
+        
+        // Set the cursor to the beginning of the element tag (this will update the outline selection)
+        editor.selection = new vscode.Selection(tagStart, tagStart);
+        
+        // Optionally, also reveal the range in the editor to ensure it's visible
+        editor.revealRange(tagRange, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+        
+        console.log(`🎯 Moved cursor to element: ${element.name} (${element.tagName}) at line ${element.startLine + 1}`);
+        
+    } catch (error) {
+        console.error('❌ Error selecting element in outline:', error);
+    }
+}
+
+/**
+ * Handle cursor position changes - sync outline selection
+ */
+function onCursorPositionChanged(editor: vscode.TextEditor) {
+    if (!editor || !editor.document.fileName.endsWith('.axaml')) {
+        return;
+    }
+    
+    if (currentDocument !== editor.document) {
+        // Document changed, need to re-parse
+        console.log('📄 Document changed, re-parsing AXAML...');
+        const provider = new AxamlDocumentSymbolProvider();
+        const text = editor.document.getText();
+        try {
+            currentAxamlElements = provider.parseAxaml(text);
+            currentDocument = editor.document;
+            console.log(`🌳 Parsed ${currentAxamlElements.length} elements for selection tracking`);
+        } catch (error) {
+            console.error('❌ Error parsing AXAML for selection:', error);
+            return;
+        }
+    }
+    
+    const position = editor.selection.active;
+    const element = findElementAtPosition(currentAxamlElements, position);
+    
+    if (element) {
+        console.log(`📍 Cursor at line ${position.line + 1}, found element: ${element.name} (${element.tagName})`);
+        // The outline view will automatically update based on the cursor position
+        // We can add additional functionality here if needed
+        
+        // Show information about the current element
+        vscode.window.setStatusBarMessage(
+            `AXAML: ${element.name} (${element.tagName})`, 
+            2000
+        );
+    }
+}
+
+/**
+ * Navigate to a specific AXAML element in the editor
+ */
+function navigateToElement(editor: vscode.TextEditor, element: AxamlElement) {
+    // Create a range for the element's opening tag
+    const tagStart = new vscode.Position(element.startLine, element.startColumn);
+    const tagEnd = new vscode.Position(element.startLine, element.startColumn + element.tagName.length + 1);
+    const tagRange = new vscode.Range(tagStart, tagEnd);
+    
+    // Set the cursor to the beginning of the element tag
+    editor.selection = new vscode.Selection(tagStart, tagStart);
+    
+    // Reveal the range in the editor to ensure it's visible
+    editor.revealRange(tagRange, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+    
+    // Show status message
+    vscode.window.setStatusBarMessage(
+        `Navigated to: ${element.name} (${element.tagName}) at line ${element.startLine + 1}`, 
+        3000
+    );
+    
+    console.log(`🧭 Navigated to element: ${element.name} (${element.tagName}) at line ${element.startLine + 1}`);
 }

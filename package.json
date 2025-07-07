@@ -2,7 +2,7 @@
   "name": "axaml-document-outline",
   "displayName": "AXAML Document Outline",
   "description": "Provides Document Outline functionality for Avalonia AXAML files with hierarchical tree view navigation",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "publisher": "avalonia-tools",
   "engines": {
     "vscode": "^1.101.0"
@@ -35,6 +35,21 @@
         "command": "axaml-outline.test",
         "title": "Test Extension (Always Available)",
         "category": "AXAML"
+      },
+      {
+        "command": "axaml-outline.navigateToElement",
+        "title": "Navigate to AXAML Element",
+        "category": "AXAML"
+      },
+      {
+        "command": "axaml-outline.showElementInfo", 
+        "title": "Show AXAML Element Information",
+        "category": "AXAML"
+      },
+      {
+        "command": "axaml-outline.toggleLineNumbers",
+        "title": "Toggle Line Numbers in Outline",
+        "category": "AXAML"
       }
     ],
     "languages": [
@@ -51,6 +66,23 @@
         "scopeName": "text.xml.axaml",
         "path": "./syntaxes/axaml.tmLanguage.json"
       }
+    ],
+    "keybindings": [
+      {
+        "command": "axaml-outline.navigateToElement",
+        "key": "ctrl+shift+o",
+        "when": "editorLangId == axaml"
+      },
+      {
+        "command": "axaml-outline.showElementInfo",
+        "key": "ctrl+shift+i",
+        "when": "editorLangId == axaml"
+      },
+      {
+        "command": "axaml-outline.toggleLineNumbers",
+        "key": "ctrl+shift+l",
+        "when": "editorLangId == axaml"
+      }
     ]
   },
   "scripts": {
@@ -65,7 +97,9 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "build-and-install": "npm run package && npx vsce package --allow-star-activation --allow-missing-repository && powershell -ExecutionPolicy Bypass -File install-extension.ps1",
+    "quick-install": "npx vsce package --allow-star-activation --allow-missing-repository && powershell -ExecutionPolicy Bypass -File install-extension.ps1"
   },
   "devDependencies": {
     "@types/vscode": "^1.101.0",
