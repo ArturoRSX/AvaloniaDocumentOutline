@@ -1,65 +1,69 @@
 # AXAML Document Outline
 
-Esta extensión de VS Code proporciona funcionalidad de **Document Outline** para archivos AXAML de Avalonia, mostrando una vista jerárquica en árbol de los elementos de la interfaz de usuario.
+This VS Code extension provides **Document Outline** functionality for Avalonia AXAML files, displaying a hierarchical tree view of your user interface elements.
 
-## Características
+![image](https://github.com/user-attachments/assets/d52a67f8-e5bf-409a-bd57-70b4f9f3e897)
 
-- 📋 **Análisis automático de archivos AXAML** - Extrae la jerarquía de elementos de UI automáticamente
-- 🌳 **Vista de árbol jerárquica** - Muestra la estructura anidada de controles de Avalonia
-- 🎯 **Navegación por clics** - Haz clic en cualquier elemento del outline para navegar al código
-- 🏷️ **Nombres y tipos de elementos** - Muestra nombres (`x:Name`), contenido de botones, texto, etc.
-- 🎨 **Iconos apropiados** - Diferentes iconos para ventanas, contenedores, botones, texto, etc.
-- ⚡ **Soporte completo de elementos Avalonia** - Reconoce Window, Grid, StackPanel, Button, TextBlock, etc.
+## Features
 
-## Cómo usar
+* 📋 **Automatic AXAML file parsing** – Extracts the UI element hierarchy automatically
+* 🌳 **Hierarchical tree view** – Shows the nested structure of Avalonia controls
+* 🎯 **Click-to-navigate** – Click any item in the outline to jump to its code
+* 🏷️ **Element names and types** – Displays names (`x:Name`), button content, text, etc.
+* 🎨 **Appropriate icons** – Different icons for windows, containers, buttons, text, and more
+* ⚡ **Full Avalonia element support** – Recognizes Window, Grid, StackPanel, Button, TextBlock, and more
 
-1. **Abre un archivo AXAML** en VS Code
-2. **Ve al panel Outline** (View → Open View → "Outline") o presiona `Ctrl+Shift+O`
-3. **Navega por la estructura** haciendo clic en los elementos del outline
+## How to Use
 
-## Elementos soportados
+1. **Open an AXAML file** in VS Code
+2. **Go to the Outline panel** (View → Open View → "Outline") or press `Ctrl+Shift+O`
+3. **Browse the structure** by clicking elements in the outline
 
-La extensión reconoce y categoriza estos tipos de elementos AXAML:
+## Supported Elements
 
-- **Ventanas y UserControls** - Mostrados como clases
-- **Contenedores de layout** (Grid, StackPanel, Canvas, DockPanel, Border) - Mostrados como paquetes
-- **Controles interactivos** (Button, CheckBox, RadioButton, Slider) - Mostrados como funciones
-- **Controles de texto** (TextBlock, TextBox, Label) - Mostrados como strings
-- **Listas y colecciones** (ListBox, ComboBox, DataGrid, TreeView) - Mostrados como arrays
-- **Imágenes y media** (Image, MediaElement) - Mostrados como archivos
+The extension recognizes and categorizes these AXAML element types:
 
-## Información mostrada
+* **Windows and UserControls** – Displayed as classes
+* **Layout containers** (Grid, StackPanel, Canvas, DockPanel, Border) – Displayed as packages
+* **Interactive controls** (Button, CheckBox, RadioButton, Slider) – Displayed as functions
+* **Text controls** (TextBlock, TextBox, Label) – Displayed as strings
+* **Lists and collections** (ListBox, ComboBox, DataGrid, TreeView) – Displayed as arrays
+* **Images and media** (Image, MediaElement) – Displayed as files
 
-Para cada elemento, la extensión muestra:
+## Displayed Information
 
-- **Nombre del elemento** (usando `x:Name` o `Name` cuando está disponible)
-- **Contenido del control** (para Button con `Content`, TextBlock con `Text`, etc.)
-- **Tipo de control** (Grid, Button, etc.)
+For each element, the extension shows:
 
-Ejemplo de cómo se muestran los elementos:
-- `Button (PlayButton)` - Button con x:Name="PlayButton"
-- `Button "Click Me"` - Button con Content="Click Me"
-- `TextBlock "Hello World"` - TextBlock con Text="Hello World"
-- `Grid` - Grid sin nombre específico
+* **Element name** (using `x:Name` or `Name` if available)
+* **Control content** (for Button with `Content`, TextBlock with `Text`, etc.)
+* **Control type** (Grid, Button, etc.)
 
-## Instalación para desarrollo
+Example of how elements are displayed:
 
-1. Clona este repositorio
-2. Ejecuta `npm install` para instalar dependencias
-3. Ejecuta `npm run compile` para compilar la extensión
-4. Presiona `F5` para ejecutar la extensión en modo debug
+* `Button (PlayButton)` – Button with x\:Name="PlayButton"
+* `Button "Click Me"` – Button with Content="Click Me"
+* `TextBlock "Hello World"` – TextBlock with Text="Hello World"
+* `Grid` – Grid without a specific name
 
-## Desarrollado para
+## Development Installation
 
-Esta extensión está específicamente diseñada para trabajar con:
-- ✅ Archivos `.axaml` de Avalonia UI
-- ✅ VS Code 1.101.0 o superior
-- ✅ Proyectos multiplataforma de Avalonia
+1. Clone this repository
+2. Run `npm install` to install dependencies
+3. Run `npm run compile` to build the extension
+4. Press `F5` to launch the extension in debug mode
 
-## Contribuir
+## Designed For
 
-Si encuentras algún problema o tienes sugerencias de mejora, por favor crea un issue en el repositorio del proyecto.
+This extension is specifically built to work with:
+
+* ✅ Avalonia UI `.axaml` files
+* ✅ VS Code 1.101.0 or higher
+* ✅ Avalonia cross-platform projects
+
+## Contributing
+
+If you find any issues or have suggestions for improvements, please create an issue in the project repository.
 
 ---
 
-**¡Disfruta de una mejor experiencia navegando por tus archivos AXAML!** 🚀
+**Enjoy a better way to navigate your AXAML files!** 🚀
